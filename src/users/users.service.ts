@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserSignUpDto } from './dto/user-signup.dto';
 import { hash,compare } from 'bcrypt';
 import { UserSignInDto } from './dto/user-signin.dto';
-import { sign } from 'crypto';
+import { sign,SignOptions } from 'jsonwebtoken';
 
 @Injectable()
 export class UsersService {
@@ -40,12 +40,14 @@ export class UsersService {
     return 'This action adds a new user';
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll(): Promise<UserEntity[]> {
+    return await this.usersRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: number) {
+    const user= await this.usersRepository.findOneBy({id});
+    if(!user) throw new NotFoundException('user not found');
+    return user;
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
@@ -59,5 +61,23 @@ export class UsersService {
   async findUserByEmail(email:string){
     return await this.usersRepository.findOneBy({email});
   }
+
+  async accessToken(user: UserEntity) {
+    const secretKey = process.env.ACCESS_TOKEN_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error('ACCESS_TOKEN_SECRET_KEY is not defined');
+    }
+    const expiresIn = process.env.ACCESS_TOKEN_EXPIRE_TIME || '1h';
+      const options: SignOptions = {
+      expiresIn: expiresIn as SignOptions['expiresIn'], 
+    };
+    return sign(
+      { id: user.id, email: user.email },
+      secretKey,
+      options
+    );
+  }
+  
+  
 
 }
