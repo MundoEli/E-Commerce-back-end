@@ -31,7 +31,23 @@
 ```bash
 $ npm install
 ```
+создай .env
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD='пароль от PGadmin'
+DB_DATABASE='bee'название базы данных
 
+ACCESS_TOKEN_SECRET_KEY=jfihuhuihuhejflfjwkjhhjghjvjhjhjcgcvkjhjc
+ACCESS_TOKEN_EXPIRE_TIME=1d
+```
+сделай миграции
+```bash
+npm run migration:generate -- db/migrations/initial
+npm run migration:run
+
+```
 ## Compile and run the project
 
 ```bash
