@@ -30,12 +30,12 @@ export class CurrentUserMiddleware implements NestMiddleware {
         }
         const decoded = verify(token, process.env.ACCESS_TOKEN_SECRET_KEY) as JwtPayload;
         const currentUser = await this.usersService.findOne(+decoded.id);
-        req.currentUser=currentUser;
-        next();
+        req.currentUser=currentUser || null;
       } catch (error) {
         console.error('Token verification failed:', error);
-        next();
+        req.currentUser=undefined;
       }
+      next();
     }
   }
 }
