@@ -1,8 +1,8 @@
 import { Roles } from "src/utility/common/user-roles.enum";
-import { Column ,Entity, PrimaryGeneratedColumn,CreateDateColumn,Timestamp,UpdateDateColumn } from "typeorm";
-import { Exclude
-    
- } from "class-transformer";
+import { Column ,Entity, PrimaryGeneratedColumn,CreateDateColumn,Timestamp,UpdateDateColumn, OneToMany } from "typeorm";
+import { Exclude} from "class-transformer";
+import { CategoryEntity } from "src/categories/entities/category.entity";
+import { ProductEntity } from "src/products/entities/product.entity";
 @Entity('users')
 export class UserEntity {
 @PrimaryGeneratedColumn()
@@ -20,4 +20,10 @@ roles:Roles[];
 createdAt:Timestamp;
 @UpdateDateColumn()
 updateAt:Timestamp;
+
+@OneToMany(()=>CategoryEntity,(cat)=>cat.addedBy)
+categories:CategoryEntity[];
+
+@OneToMany(()=>ProductEntity,(prod)=>prod.addedBy)
+products:ProductEntity[];
 }
