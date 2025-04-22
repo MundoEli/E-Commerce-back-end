@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -8,6 +8,9 @@ import { Roles } from 'src/utility/common/user-roles.enum';
 import { CurrentUser } from 'src/utility/decorators/current-user.decorator';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { ProductEntity } from './entities/product.entity';
+import { query } from 'express';
+import { SerializeIncludes, SerializeInterceptor } from 'src/utility/interceptors/serialize.interceptor';
+import { ProductsDto } from './dto/product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -19,9 +22,10 @@ export class ProductsController {
     return this.productsService.create(createProductDto,currentUser);
   }
 
+  @SerializeIncludes(ProductsDto)
   @Get()
-  async findAll() {
-    return this.productsService.findAll();
+  async findAll(@Query() query:any): Promise<ProductsDto> {
+    return this.productsService.findAll(query);
   }
 
   @Get(':id')
@@ -37,7 +41,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(+id);
+  async remove(@Param('id') id: string) {
+    return await this.productsService.remove(+id);
   }
 }
