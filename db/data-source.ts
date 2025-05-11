@@ -12,9 +12,9 @@ export const dataSourceOptions:DataSourceOptions={
     migrations:['dist/db/migrations/*{.ts,.js}'],
     logging:false,
     synchronize:false,
-    ssl: {
-        rejectUnauthorized: false, // ВАЖНО для Render
-      },
+    //ssl: {
+    //    rejectUnauthorized: false, // ВАЖНО для Render
+    //  },
 }
 
 const dataSource=new DataSource(dataSourceOptions);

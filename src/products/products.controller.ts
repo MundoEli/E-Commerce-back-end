@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -28,8 +28,17 @@ export class ProductsController {
     return this.productsService.findAll(query);
   }
 
+  @Get('recommended')
+  getRecommended(): Promise<ProductEntity[]> {
+    return this.productsService.getRecommended();
+  }
+  
   @Get(':id')
   findOne(@Param('id') id: string) {
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      throw new BadRequestException('Invalid ID');
+    }
     return this.productsService.findOne(+id);
   }
 
@@ -44,4 +53,6 @@ export class ProductsController {
   async remove(@Param('id') id: string) {
     return await this.productsService.remove(+id);
   }
+
+
 }

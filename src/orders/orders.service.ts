@@ -143,4 +143,16 @@ export class OrdersService {
       await this.productService.updateStock(op.product.id,op.product_quantity,status);
     }
   }
+
+  async findAllByUserId(userId: number): Promise<OrderEntity[]> {
+    return await this.orderRepository.find({
+      where: { user: { id: userId } },
+      relations: {
+        shippingAddress: true,
+        products: { product: true },
+      },
+      order: { orderAt: 'DESC' },
+    });
+  }
+  
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Put, BadRequestException } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -28,8 +28,16 @@ export class OrdersController {
     return await this.ordersService.findAll();
   }
 
+  @UseGuards(AuthenticationGuard)
+  @Get('my-orders')
+  async findMyOrders(@CurrentUser() currentUser: UserEntity): Promise<OrderEntity[]> {
+    return this.ordersService.findAllByUserId(currentUser.id);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string):Promise<OrderEntity> {
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) throw new BadRequestException('Invalid order ID');
     return await this.ordersService.findOne(+id);
   }
 
