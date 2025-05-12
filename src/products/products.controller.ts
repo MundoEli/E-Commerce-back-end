@@ -54,15 +54,11 @@ export class ProductsController {
     return await this.productsService.remove(+id);
   }
 
-  @UseGuards(AuthenticationGuard,AuthorizeGuard([Roles.PREMIUM]))
-  @Get(':id/liquidity')
-  getLiquidity(@Param('id') id: string) {
-  const parsedId = parseInt(id, 10);
-  if (isNaN(parsedId)) {
-    throw new BadRequestException('Invalid ID');
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.PREMIUM]))
+  @Post('liquidity')
+  checkLiquidity(@Body() body: { averageRating: number; reviewCount: number; price: number; stock: number }) {
+    return this.productsService.calculateLiquidityScore(body);
   }
-  return this.productsService.getProductLiquidityScore(parsedId);
-}
 
 
 
