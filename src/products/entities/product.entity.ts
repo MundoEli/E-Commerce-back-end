@@ -18,6 +18,11 @@ export class ProductEntity {
     stock:number;
     @Column('simple-array')
     images:string[];
+    @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
+    averageRating: number;
+
+    @Column({ default: 0 })
+    reviewCount: number;
     @CreateDateColumn()
     createdAt:Timestamp;
     @UpdateDateColumn()

@@ -8,6 +8,7 @@ import { UserSignUpDto } from './dto/user-signup.dto';
 import { hash,compare } from 'bcrypt';
 import { UserSignInDto } from './dto/user-signin.dto';
 import { sign,SignOptions } from 'jsonwebtoken';
+import { ChangeRoleDto } from './dto/change-role.dto';
 
 @Injectable()
 export class UsersService {
@@ -78,6 +79,11 @@ export class UsersService {
     );
   }
   
+  async changeUserRole(userId: number, changeRoleDto: ChangeRoleDto): Promise<UserEntity> {
+    const user = await this.findOne(userId);
+    user.roles = changeRoleDto.roles;
+    return await this.usersRepository.save(user);
+  }
   
 
 }

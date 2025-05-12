@@ -192,6 +192,49 @@ export class ProductsService {
     // Возвращаем массив чисел
     return result.map(row => Number(row.categoryId)).filter(id => !isNaN(id)); // Ensure valid categoryIds
   }
+
+  async getProductLiquidityScore(id: number): Promise<{ score: number; status: string }> {
+    const product = await this.productReposintory.findOne({
+      where: { id },
+      relations: ['category'],
+    });
+  
+    if (!product) {
+      throw new NotAcceptableException('Product not found');
+    }
+  
+    // Весовые коэффициенты
+    const weights = {
+      rating: 0.4,
+      reviews: 0.3,
+      price: 0.2,
+      stock: 0.1,
+    };
+  
+    // Нормализация (примерно — вы можете улучшить)
+    const normalizedRating = Math.min(product.averageRating / 5, 1); // 0–1
+    const normalizedReviews = Math.min(product.reviewCount / 1000, 1); // предположим максимум 1000
+    const normalizedPrice = product.price > 0 ? 1 - Math.min(product.price / 1000, 1) : 0; // чем дешевле, тем выше score
+    const normalizedStock = product.stock > 0 ? 1 - Math.min(product.stock / 500, 1) : 0.5; // чем меньше склад, тем выше score
+  
+    const score = (
+      normalizedRating * weights.rating +
+      normalizedReviews * weights.reviews +
+      normalizedPrice * weights.price +
+      normalizedStock * weights.stock
+    );
+  
+    const status =
+      score > 0.75 ? 'Высокая ликвидность' :
+      score > 0.5 ? 'Средняя ликвидность' :
+      'Низкая ликвидность';
+  
+    return {
+      score: +score.toFixed(2),
+      status,
+    };
+  }
+  
   
   
 }

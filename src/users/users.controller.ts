@@ -10,6 +10,7 @@ import { AuthenticationGuard } from 'src/utility/guards/authentication.guard';
 import { AuthorizeRoles } from 'src/utility/decorators/authorize-roles.decorator';
 import { AuthorizeGuard } from 'src/utility/guards/authorization.guard';
 import { Roles } from 'src/utility/common/user-roles.enum';
+import { ChangeRoleDto } from './dto/change-role.dto';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -61,4 +62,12 @@ export class UsersController {
   getProfile(@CurrentUser() currentUser:UserEntity){
     return currentUser;
   }  
+
+  @Patch('role/:id')
+  async changeRole(
+    @Param('id') id: string,
+    @Body() changeRoleDto: ChangeRoleDto,
+  ): Promise<UserEntity> {
+    return this.usersService.changeUserRole(+id, changeRoleDto);
+  }
 }
