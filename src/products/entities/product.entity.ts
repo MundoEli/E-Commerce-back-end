@@ -18,15 +18,17 @@ export class ProductEntity {
     stock:number;
     @Column('simple-array')
     images:string[];
-    @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
-    averageRating: number;
-
-    @Column({ default: 0 })
-    reviewCount: number;
     @CreateDateColumn()
     createdAt:Timestamp;
     @UpdateDateColumn()
     updateAt:Timestamp;
+    @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
+    averageRating: number;
+    @Column({ default: 0 })
+    reviewCount: number;
+    @Column({ type: 'boolean', default: false })
+    isPopular: boolean;
+
 
     @ManyToOne(()=>UserEntity,(user)=>user.products)
     addedBy:UserEntity;

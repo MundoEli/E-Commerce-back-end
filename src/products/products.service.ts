@@ -32,68 +32,78 @@ export class ProductsService {
     return await this.productReposintory.save(product)
   }
 
-  async findAll(query:any):Promise<{products:any[],totalProducts,limit}> {
-    let filteredTotalProducts:number;
-    let limit:number;
-    
-    if(!query.limit){
-      limit=4;
-    }else{
-      limit=query.limit;
+  async findAll(query: any): Promise<{ products: any[], totalProducts: number, limit: number }> {
+    let limit: number;
+  
+    if (!query.limit) {
+      limit = 4;
+    } else {
+      limit = query.limit;
     }
-
-    const queryBuilder=this.dataSource
+  
+    const queryBuilder = this.dataSource
       .getRepository(ProductEntity)
       .createQueryBuilder('product')
-      .leftJoinAndSelect('product.category','category')
-      .leftJoin('product.reviews','review')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoin('product.reviews', 'review')
       .addSelect([
         'COUNT(review.id) AS reviewCount',
         'AVG(review.ratings)::numeric(10,2) AS avgRating',
       ])
-      .groupBy('product.id,category.id');
-
-    const totalProducts=await queryBuilder.getCount();
-
-    if(query.search){
-      const search=query.search;
-      queryBuilder.andWhere('product.title like :title',{
+      .groupBy('product.id, category.id');
+  
+    const totalProducts = await queryBuilder.getCount();
+  
+    if (query.search) {
+      const search = query.search;
+      queryBuilder.andWhere('product.title like :title', {
         title: `%${search}%`
       });
     }
-
-    if(query.category){
-      queryBuilder.andWhere('category.id=:id',{id:query.category})
+  
+    if (query.category) {
+      queryBuilder.andWhere('category.id=:id', { id: query.category });
     }
-
-    if(query.minPrice){
-      queryBuilder.andWhere("product.price>=:minPrice",{
-        minPrice:query.minPrice
+  
+    if (query.minPrice) {
+      queryBuilder.andWhere("product.price>=:minPrice", {
+        minPrice: query.minPrice
       });
     }
-    if(query.maxPrice){
-      queryBuilder.andWhere("product.price<=:maxPrice",{
-        maxPrice:query.maxPrice
+  
+    if (query.maxPrice) {
+      queryBuilder.andWhere("product.price<=:maxPrice", {
+        maxPrice: query.maxPrice
       });
     }
-
-    if(query.minRating){
-      queryBuilder.andHaving("AVG(review.ratings)>=:minRating",{minRating:query.minRating})
+  
+    if (query.minRating) {
+      queryBuilder.andHaving("AVG(review.ratings)>=:minRating", { minRating: query.minRating });
     }
-    if(query.maxRating){
-      queryBuilder.andHaving("AVG(review.ratings)<=:maxRating",{maxRating:query.maxRating})
+  
+    if (query.maxRating) {
+      queryBuilder.andHaving("AVG(review.ratings)<=:maxRating", { maxRating: query.maxRating });
     }
-
+  
     queryBuilder.limit(limit);
-
-    if(query.offset){
+  
+    if (query.offset) {
       queryBuilder.offset(query.offset);
     }
-
-    const products=await queryBuilder.getRawMany();
-    
-    return {products,totalProducts,limit};
+  
+    const products = await queryBuilder.getRawMany();
+  
+    // Преобразуем поля, которые мы извлекли с помощью SQL-запроса:
+    const result = products.map(product => ({
+      ...product,
+      averageRating: product.avgRating,  // Перемещаем результат вычисления avgRating в соответствующее поле
+      reviewCount: product.reviewCount,  // Перемещаем результат вычисления reviewCount в соответствующее поле
+      isPopular: product.avgRating >= 4.0 ? true : false,  // Пример логики для установки значения isPopular
+    }));
+  
+    return { products: result, totalProducts, limit };
   }
+  
 
   async findOne(id: number) {
     const product= await this.productReposintory.findOne({
@@ -194,47 +204,47 @@ export class ProductsService {
   }
 
   async getProductLiquidityScore(id: number): Promise<{ score: number; status: string }> {
-    const product = await this.productReposintory.findOne({
-      where: { id },
-      relations: ['category'],
-    });
-  
-    if (!product) {
-      throw new NotAcceptableException('Product not found');
-    }
-  
-    // Весовые коэффициенты
-    const weights = {
-      rating: 0.4,
-      reviews: 0.3,
-      price: 0.2,
-      stock: 0.1,
-    };
-  
-    // Нормализация (примерно — вы можете улучшить)
-    const normalizedRating = Math.min(product.averageRating / 5, 1); // 0–1
-    const normalizedReviews = Math.min(product.reviewCount / 1000, 1); // предположим максимум 1000
-    const normalizedPrice = product.price > 0 ? 1 - Math.min(product.price / 1000, 1) : 0; // чем дешевле, тем выше score
-    const normalizedStock = product.stock > 0 ? 1 - Math.min(product.stock / 500, 1) : 0.5; // чем меньше склад, тем выше score
-  
-    const score = (
-      normalizedRating * weights.rating +
-      normalizedReviews * weights.reviews +
-      normalizedPrice * weights.price +
-      normalizedStock * weights.stock
-    );
-  
-    const status =
-      score > 0.75 ? 'Высокая ликвидность' :
-      score > 0.5 ? 'Средняя ликвидность' :
-      'Низкая ликвидность';
-  
-    return {
-      score: +score.toFixed(2),
-      status,
-    };
+  const product = await this.productReposintory.findOne({
+    where: { id },
+    relations: ['category'],
+  });
+
+  if (!product) {
+    throw new NotAcceptableException('Product not found');
   }
-  
+
+  // Весовые коэффициенты
+  const weights = {
+    rating: 0.4,
+    reviews: 0.3,
+    price: 0.2,
+    stock: 0.1,
+  };
+
+  // Нормализация (примерно — вы можете улучшить)
+  const normalizedRating = Math.min(product.averageRating / 5, 1); // 0–1
+  const normalizedReviews = Math.min(product.reviewCount / 1000, 1); // предположим максимум 1000
+  const normalizedPrice = product.price > 0 ? 1 - Math.min(product.price / 1000, 1) : 0; // чем дешевле, тем выше score
+  const normalizedStock = product.stock > 0 ? 1 - Math.min(product.stock / 500, 1) : 0.5; // чем меньше склад, тем выше score
+
+  const score = (
+    normalizedRating * weights.rating +
+    normalizedReviews * weights.reviews +
+    normalizedPrice * weights.price +
+    normalizedStock * weights.stock
+  );
+
+  const status =
+    score > 0.75 ? 'Высокая ликвидность' :
+    score > 0.5 ? 'Средняя ликвидность' :
+    'Низкая ликвидность';
+
+  return {
+    score: +score.toFixed(2),
+    status,
+  };
+}
+
   
   
 }
