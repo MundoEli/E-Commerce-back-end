@@ -54,12 +54,10 @@ export class ProductsController {
     return await this.productsService.remove(+id);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.PREMIUM]))
   @Post('liquidity')
   checkLiquidity(@Body() body: { averageRating: number; reviewCount: number; price: number; stock: number }) {
     return this.productsService.calculateLiquidityScore(body);
   }
-
 
 
 }
